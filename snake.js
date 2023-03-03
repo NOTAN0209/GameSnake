@@ -1,134 +1,94 @@
 "use strict";
 
-    // Поле, на котором всё будет происходить, — тоже как бы переменная
-    var canvas = document.getElementById('game');
-    // Классическая змейка — двухмерная, сделаем такую же
-    var context = canvas.getContext('2d');
-    // Размер одной клеточки на поле — 16 пикселей
-    var grid = 16;
-    // Служебная переменная, которая отвечает за скорость змейки
-    var count = 0;
-    // А вот и сама змейка
-    var snake = {
-      // Начальные координаты
-      x: 160,
-      y: 160,
-      // Скорость змейки — в каждом новом кадре змейка смещается по оси Х или У. На старте будет двигаться горизонтально, поэтому скорость по игреку равна нулю.
-      dx: grid,
-      dy: 0,
-      // Тащим за собой хвост, который пока пустой
-      cells: [],
-      // Стартовая длина змейки — 4 клеточки
-      maxCells: 4
-    };
-    // А это — еда. Представим, что это красные яблоки.
-    var apple = {
-      // Начальные координаты яблока
-      x: 320,
-      y: 320
-    };
-    // Делаем генератор случайных чисел в заданном диапазоне
-    function getRandomInt(min, max) {
-      return Math.floor(Math.random() * (max - min)) + min;
-    }
-    // Игровой цикл — основной процесс, внутри которого будет всё происходить
-    function loop() {
-      // Хитрая функция, которая замедляет скорость игры с 60 кадров в секунду до 15 (60/15 = 4)
-      requestAnimationFrame(loop);
-      // Игровой код выполнится только один раз из четырёх, в этом и суть замедления кадров, а пока переменная count меньше четырёх, код выполняться не будет
-      if (++count < 4) {
-        return;
-      }
-      // Обнуляем переменную скорости
-      count = 0;
-      // Очищаем игровое поле
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      // Двигаем змейку с нужной скоростью
-      snake.x += snake.dx;
-      snake.y += snake.dy;
-      // Если змейка достигла края поля по горизонтали — продолжаем её движение с противоположной строны
-      if (snake.x < 0) {
-        snake.x = canvas.width - grid;
-      }
-      else if (snake.x >= canvas.width) {
-        snake.x = 0;
-      }
-      // Делаем то же самое для движения по вертикали
-      if (snake.y < 0) {
-        snake.y = canvas.height - grid;
-      }
-      else if (snake.y >= canvas.height) {
-        snake.y = 0;
-      }
-      // Продолжаем двигаться в выбранном направлении. Голова всегда впереди, поэтому добавляем её координаты в начало массива, который отвечает за всю змейку
-      snake.cells.unshift({ x: snake.x, y: snake.y });
-      // Сразу после этого удаляем последний элемент из массива змейки, потому что она движется и постоянно освобождает клетки после себя
-      if (snake.cells.length > snake.maxCells) {
-        snake.cells.pop();
-      }
-      // Рисуем еду — красное яблоко
-      context.fillStyle = 'red';
-      context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
-      // Одно движение змейки — один новый нарисованный квадратик 
-      context.fillStyle = 'green';
-      // Обрабатываем каждый элемент змейки
-      snake.cells.forEach(function (cell, index) {
-        // Чтобы создать эффект клеточек, делаем зелёные квадратики меньше на один пиксель, чтобы вокруг них образовалась чёрная граница
-        context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
-        // Если змейка добралась до яблока...
-        if (cell.x === apple.x && cell.y === apple.y) {
-          // увеличиваем длину змейки
-          snake.maxCells++;
-          // Рисуем новое яблочко
-          // Помним, что размер холста у нас 400x400, при этом он разбит на ячейки — 25 в каждую сторону
-          apple.x = getRandomInt(0, 25) * grid;
-          apple.y = getRandomInt(0, 25) * grid;
-        }
-        // Проверяем, не столкнулась ли змея сама с собой
-        // Для этого перебираем весь массив и смотрим, есть ли у нас в массиве змейки две клетки с одинаковыми координатами 
-        for (var i = index + 1; i < snake.cells.length; i++) {
-          // Если такие клетки есть — начинаем игру заново
-          if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
-            // Задаём стартовые параметры основным переменным
-            snake.x = 160;
-            snake.y = 160;
-            snake.cells = [];
-            snake.maxCells = 4;
-            snake.dx = grid;
-            snake.dy = 0;
-            // Ставим яблочко в случайное место
-            apple.x = getRandomInt(0, 25) * grid;
-            apple.y = getRandomInt(0, 25) * grid;
-          }
-        }
-      });
-    }
-    // Смотрим, какие нажимаются клавиши, и реагируем на них нужным образом
-    document.addEventListener('keydown', function (e) {
-      // Дополнительно проверяем такой момент: если змейка движется, например, влево, то ещё одно нажатие влево или вправо ничего не поменяет — змейка продолжит двигаться в ту же сторону, что и раньше. Это сделано для того, чтобы не разворачивать весь массив со змейкой на лету и не усложнять код игры.
-      // Стрелка влево
-      // Если нажата стрелка влево, и при этом змейка никуда не движется по горизонтали…
-      if (e.which === 37 && snake.dx === 0) {
-        // то даём ей движение по горизонтали, влево, а вертикальное — останавливаем
-        // Та же самая логика будет и в остальных кнопках
-        snake.dx = -grid;
-        snake.dy = 0;
-      }
-      // Стрелка вверх
-      else if (e.which === 38 && snake.dy === 0) {
-        snake.dy = -grid;
-        snake.dx = 0;
-      }
-      // Стрелка вправо
-      else if (e.which === 39 && snake.dx === 0) {
-        snake.dx = grid;
-        snake.dy = 0;
-      }
-      // Стрелка вниз
-      else if (e.which === 40 && snake.dy === 0) {
-        snake.dy = grid;
-        snake.dx = 0;
-      }
-    });
-    // Запускаем игру
-    requestAnimationFrame(loop);
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const ground = new Image();
+ground.src = "img/ground.png";
+
+const foodImg = new Image();
+foodImg.src = "img/food.png";
+
+let box = 32;
+
+let score = 0;
+
+let food = {
+	x: Math.floor((Math.random() * 17 + 1)) * box,
+	y: Math.floor((Math.random() * 15 + 3)) * box,
+};
+
+let snake = [];
+snake[0] = {
+	x: 9 * box,
+	y: 10 * box
+};
+
+document.addEventListener("keydown", direction);
+
+let dir;
+
+function direction(event) {
+	if(event.keyCode == 37 && dir != "right")
+		dir = "left";
+	else if(event.keyCode == 38 && dir != "down")
+		dir = "up";
+	else if(event.keyCode == 39 && dir != "left")
+		dir = "right";
+	else if(event.keyCode == 40 && dir != "up")
+		dir = "down";
+}
+
+function eatTail(head, arr) {
+	for(let i = 0; i < arr.length; i++) {
+		if(head.x == arr[i].x && head.y == arr[i].y)
+			clearInterval(game);
+	}
+}
+
+function drawGame() {
+	ctx.drawImage(ground, 0, 0);
+
+	ctx.drawImage(foodImg, food.x, food.y);
+
+	for(let i = 0; i < snake.length; i++) {
+		ctx.fillStyle = i == 0 ? "green" : "red";
+		ctx.fillRect(snake[i].x, snake[i].y, box, box);
+	}
+
+	ctx.fillStyle = "white";
+	ctx.font = "50px Arial";
+	ctx.fillText(score, box * 2.5, box * 1.7);
+
+	let snakeX = snake[0].x;
+	let snakeY = snake[0].y;
+
+	if(snakeX == food.x && snakeY == food.y) {
+		score++;
+		food = {
+			x: Math.floor((Math.random() * 17 + 1)) * box,
+			y: Math.floor((Math.random() * 15 + 3)) * box,
+		};
+	} else
+		snake.pop();
+
+	if(snakeX < box || snakeX > box * 17
+		|| snakeY < 3 * box || snakeY > box * 17)
+		clearInterval(game);
+
+	if(dir == "left") snakeX -= box;
+	if(dir == "right") snakeX += box;
+	if(dir == "up") snakeY -= box;
+	if(dir == "down") snakeY += box;
+
+	let newHead = {
+		x: snakeX,
+		y: snakeY
+	};
+
+	eatTail(newHead, snake);
+
+	snake.unshift(newHead);
+}
+
+let game = setInterval(drawGame, 300);

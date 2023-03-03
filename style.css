@@ -1,15 +1,13 @@
 html,
 body {
-  height: 100%;
-  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  margin-left: 150px;
 }
 
 /*Задаём глобальные параметры*/
 body {
   background: black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /*Делаем границу вокруг игрового поля*/
@@ -17,7 +15,3 @@ canvas {
   border: 1px solid white;
 }
 
-.field{
-    width:400;
-    height:400; 
-}
