@@ -16,7 +16,7 @@ let box = 32;
 
 let score = 0;
 
-let life = 3;
+let life = 5;
 
 let food = {
 	x: Math.floor((Math.random() * 17 + 1)) * box,
